@@ -3,7 +3,8 @@ import json
 import os
 from datetime import datetime
 
-DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "route_planner.db")
+DB_FILE = "/tmp/route_planner.db" if os.environ.get("VERCEL") else os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "route_planner.db")
 
 
 def get_db():

@@ -98,30 +98,29 @@ const CITY_PRESETS = {
 
 // Tile Providers
 const TILE_PROVIDERS = {
-  // CartoDB Voyager: Super crisp, bright, vivid and modern Google-Maps style
   voyager: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     options: {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a>, &copy; <a href="https://openstreetmap.org">OSM</a>',
+      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
       maxZoom: 19
     }
   },
   osm: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     options: {
       attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 19
     }
   },
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     options: {
-      attribution: '&copy; CARTO',
-      maxZoom: 19
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+      className: 'dark-tiles'
     }
   }
 };
-
 /**
  * Initialize Leaflet Map
  */

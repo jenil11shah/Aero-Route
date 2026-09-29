@@ -1,7 +1,6 @@
 const $=id=>document.getElementById(id);
 const map=L.map('map').setView([40.7580,-73.9855],12);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO'}).addTo(map);
-let routeLayer=L.layerGroup().addTo(map),poiLayer=L.layerGroup().addTo(map),closureLayer=L.layerGroup().addTo(map);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);let routeLayer=L.layerGroup().addTo(map),poiLayer=L.layerGroup().addTo(map),closureLayer=L.layerGroup().addTo(map);
 let current=null,blocking=false;
 const api=async(url,opt)=>{const r=await fetch(url,opt);const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||r.statusText);return d};
 const post=(url,body)=>api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});

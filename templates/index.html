@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AEROROUTE AI — Autonomous Multi-Objective Navigation Suite</title>
+
+  <!-- PWA & Mobile Web App Optimization -->
+  <meta name="application-name" content="AeroRoute AI">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AeroRoute AI">
+  <meta name="theme-color" content="#4F46E5">
+  <meta name="description" content="AI-Powered Route Planning & Optimization with Road Closure Detours, Emergency Corridors, and Nearby Services Hub.">
+
+  <!-- Google Fonts: Plus Jakarta Sans & Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons 6.5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Custom Creative Modern Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <!-- Chart.js for Route Intelligence Telemetry -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       TOP NAVIGATION BAR WITH CENTERED BRANDING: "AEROROUTE AI"
+       ========================================================================== -->
+  <header class="navbar">
+    
+    <!-- Left Navigation Items -->
+    <div class="nav-left-section">
+      <div class="telemetry-pill-header" title="Satellite Link Status">
+        <span class="live-dot-green"></span>
+        <span class="telemetry-pill-text">18 SATS • AI CORE ACTIVE</span>
+      </div>
+
+      <!-- Quick City Preset Selector -->
+      <select id="quickCitySelect" class="city-select" title="Jump to City Preset">
+        <option value="">📍 Select City...</option>
+        <option value="nyc" selected>New York City, USA</option>
+        <option value="london">London, UK</option>
+        <option value="paris">Paris, France</option>
+        <option value="sf">San Francisco, USA</option>
+        <option value="tokyo">Tokyo, Japan</option>
+        <option value="bangalore">Bangalore, India</option>
+      </select>
+    </div>
+
+    <!-- ======================================================================
+         CENTER BRANDING: "AEROROUTE AI" (IN THE MIDDLE OF THE WEB APP)
+         ====================================================================== -->
+    <div class="nav-center-brand">
+      <div class="brand-radar-ping"></div>
+      <div class="brand-icon-gem">
+        <i class="fa-solid fa-satellite-dish"></i>
+      </div>
+      <div class="brand-title-group">
+        <div class="brand-title-main">AEROROUTE <span class="ai-glow-tag">AI</span></div>
+        <div class="brand-subtitle">AUTONOMOUS MULTI-OBJECTIVE ROUTING ENGINE</div>
+      </div>
+    </div>
+
+    <!-- Right Navigation Actions & Tools -->
+    <div class="nav-actions">
+
+      <!-- Direct Download Source Code (.ZIP) Button -->
+      <a href="/download" class="btn-download-app" title="Download Complete Web Application Source Code (.ZIP)">
+        <i class="fa-solid fa-cloud-arrow-down fa-bounce"></i>
+        <span>Download App (.ZIP)</span>
+      </a>
+
+      <!-- Emergency Mode Master Switch -->
+      <button id="btnEmergencyModeToggle" class="btn-emergency-mode" title="Toggle Emergency Siren Priority Mode">
+        <i class="fa-solid fa-truck-medical"></i>
+        <span>Emergency Mode</span>
+      </button>
+
+      <!-- Saved Routes DB Drawer Toggle -->
+      <button id="btnOpenSavedRoutes" class="btn-nav-tool" title="Saved Routes & Database History">
+        <i class="fa-solid fa-bookmark"></i>
+      </button>
+
+      <!-- Route Intelligence Dashboard Toggle -->
+      <button id="btnOpenAnalytics" class="btn-nav-tool" title="Route Intelligence & Analytics Modal">
+        <i class="fa-solid fa-chart-line"></i>
+      </button>
+
+      <!-- Voice Guidance Toggle -->
+      <button id="btnVoiceToggle" class="btn-nav-tool" title="Voice Guidance (TTS) Enabled">
+        <i class="fa-solid fa-volume-high"></i>
+      </button>
+
+      <!-- Dark / Light Theme Toggle -->
+      <button id="btnThemeToggle" class="btn-nav-tool" title="Toggle Light/Dark Theme">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       MAIN APP CONTAINER (SIDEBAR + MAP CANVAS)
+       ========================================================================== -->
+  <div class="app-container">
+
+    <!-- LEFT CONTROL SIDEBAR -->
+    <aside class="planner-sidebar" id="plannerSidebar">
+      <div class="sidebar-content">
+
+        <!-- Location Input Section -->
+        <div class="input-group-card">
+          <div class="card-glow-accent"></div>
+          
+          <!-- Start Input -->
+          <div class="location-input-row">
+            <span class="loc-dot start" title="Start Point"></span>
+            <div class="location-input-wrapper">
+              <input type="text" id="inputStart" class="location-input" placeholder="Enter starting location..." value="Times Square, New York" autocomplete="off">
+              <button id="btnGpsStart" class="btn-input-icon" title="Use My Current GPS Location">
+                <i class="fa-solid fa-crosshairs"></i>
+              </button>
+              <div id="startAutocomplete" class="autocomplete-dropdown"></div>
+            </div>
+          </div>
+
+          <!-- Swap Locations Button -->
+          <button id="btnSwapLocations" class="btn-swap-locations" title="Swap Start & Destination">
+            <i class="fa-solid fa-arrow-down-up-across-line"></i>
+          </button>
+
+          <!-- Dynamic Waypoints Container -->
+          <div id="waypointsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
+
+          <!-- Destination Input -->
+          <div class="location-input-row">
+            <span class="loc-dot end" title="Destination Point"></span>
+            <div class="location-input-wrapper">
+              <input type="text" id="inputDest" class="location-input" placeholder="Enter destination..." value="Brooklyn Bridge, New York" autocomplete="off">
+              <button id="btnClearDest" class="btn-input-icon" title="Clear Destination">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              <div id="destAutocomplete" class="autocomplete-dropdown"></div>
+            </div>
+          </div>
+
+          <!-- Actions: Add Stop / Pick on Map -->
+          <div class="waypoint-actions">
+            <button id="btnAddWaypoint" class="btn-add-stop">
+              <i class="fa-solid fa-plus-circle"></i> Add Waypoint
+            </button>
+            <button id="btnPickOnMap" class="btn-pick-map">
+              <i class="fa-solid fa-map-pin"></i> Pick on Map
+            </button>
+          </div>
+        </div>
+
+        <!-- ROUTE PRIORITY SELECTOR (CREATIVE VIBRANT CARDS) -->
+        <div class="priority-section">
+          <div class="section-label">
+            <span>Optimization Priority</span>
+            <span id="activePriorityBadge" class="priority-badge-live">FASTEST</span>
+          </div>
+
+          <div class="priority-grid">
+            <!-- 1. Fastest -->
+            <div class="priority-chip active" data-priority="fastest">
+              <span class="priority-icon" style="color: #6366F1;"><i class="fa-solid fa-bolt"></i></span>
+              <div class="priority-info">
+                <span class="priority-name">Fastest</span>
+                <span class="priority-sub">Min travel time</span>
+              </div>
+            </div>
+
+            <!-- 2. Safest -->
+            <div class="priority-chip" data-priority="safest">
+              <span class="priority-icon" style="color: #10B981;"><i class="fa-solid fa-shield-halved"></i></span>
+              <div class="priority-info">
+                <span class="priority-name">Safest</span>
+                <span class="priority-sub">Well-lit arteries</span>
+              </div>
+            </div>
+
+            <!-- 3. Emergency Mode -->
+            <div class="priority-chip emergency" data-priority="emergency">
+              <span class="priority-icon" style="color: #EF4444;"><i class="fa-solid fa-truck-fast"></i></span>
+              <div class="priority-info">
+                <span class="priority-name">Emergency</span>
+                <span class="priority-sub">Siren clearance</span>
+              </div>
+            </div>
+
+            <!-- 4. Balanced -->
+            <div class="priority-chip" data-priority="balanced">
+              <span class="priority-icon" style="color: #8B5CF6;"><i class="fa-solid fa-scale-balanced"></i></span>
+              <div class="priority-info">
+                <span class="priority-name">Balanced</span>
+                <span class="priority-sub">Optimal harmony</span>
+              </div>
+            </div>
+
+            <!-- 5. Accessible -->
+            <div class="priority-chip" data-priority="accessible">
+              <span class="priority-icon" style="color: #06B6D4;"><i class="fa-solid fa-wheelchair"></i></span>
+              <div class="priority-info">
+                <span class="priority-name">Accessible</span>
+                <span class="priority-sub">Low slope & smooth</span>
+              </div>
+            </div>
+
+            <!-- 6. Avoid Crowd -->
+            <div class="priority-chip" data-priority="avoid_crowd">
+              <span class="priority-icon" style="color: #F59E0B;"><i class="fa-solid fa-users-slash"></i></span>
+              <div class="priority-info">
+                <span class="priority-name">Avoid Traffic</span>
+                <span class="priority-sub">Bypass bottlenecks</span>
+              </div>
+            </div>
+
+            <!-- 7. Scenic -->
+            <div class="priority-chip" data-priority="scenic">
+              <span class="priority-icon" style="color: #059669;"><i class="fa-solid fa-tree"></i></span>
+              <div class="priority-info">
+                <span class="priority-name">Scenic</span>
+                <span class="priority-sub">Parks & vistas</span>
+              </div>
+            </div>
+
+            <!-- 8. Budget / Eco -->
+            <div class="priority-chip" data-priority="budget">
+              <span class="priority-icon" style="color: #84CC16;"><i class="fa-solid fa-leaf"></i></span>
+              <div class="priority-info">
+                <span class="priority-name">Eco / Budget</span>
+                <span class="priority-sub">Lowest fuel burn</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Primary Route Calculation CTA -->
+        <button id="btnCalculateRoute" class="btn-calculate-route">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Plan & Optimize Route</span>
+        </button>
+
+        <!-- ACTIVE ROUTE SUMMARY CARD (Visible after calculation) -->
+        <div id="routeSummaryCard" class="route-summary-card">
+          <div class="summary-header">
+            <div class="eta-display">
+              <span class="eta-time" id="valEta">18 min</span>
+              <span class="eta-sub" id="valArrivalTime">ETA: 12:45 PM • FASTEST</span>
+            </div>
+            <button id="btnSaveCurrentRoute" class="btn-nav-tool" title="Save Route to SQLite Database" style="border-radius: 50%;">
+              <i class="fa-regular fa-bookmark"></i>
+            </button>
+          </div>
+
+          <div class="route-metrics-row">
+            <div class="metric-col">
+              <span class="metric-val" id="valDistance">6.4 km</span>
+              <span class="metric-lbl">Distance</span>
+            </div>
+            <div class="metric-col">
+              <span class="metric-val" id="valCO2" style="color: #10B981;">0.8 kg</span>
+              <span class="metric-lbl">CO₂ Emissions</span>
+            </div>
+            <div class="metric-col">
+              <span class="metric-val" id="valSafety" style="color: #6366F1;">94/100</span>
+              <span class="metric-lbl">Safety Index</span>
+            </div>
+          </div>
+
+          <!-- Alternatives List -->
+          <div class="alternatives-container">
+            <div class="section-label" style="font-size: 0.75rem;">Alternative Corridors</div>
+            <div id="alternativesList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+          </div>
+
+          <!-- Live Trip Simulation Controls -->
+          <div class="sim-controls-card">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-main);">
+                <i class="fa-solid fa-car-side" style="color: var(--primary-accent);"></i> Live Navigation Driver
+              </span>
+              <span id="simSpeedLabel" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); background: var(--bg-surface); padding: 2px 8px; border-radius: 20px;">2x Speed</span>
+            </div>
+            
+            <div class="sim-btn-row">
+              <button id="btnStartSim" class="btn-sim-action btn-sim-start">
+                <i class="fa-solid fa-play"></i> Start Drive
+              </button>
+              <button id="btnTriggerObstacle" class="btn-sim-action btn-sim-reroute" title="Simulate encountering a road closure ahead to trigger dynamic reroute">
+                <i class="fa-solid fa-triangle-exclamation"></i> Roadblock Reroute
+              </button>
+            </div>
+          </div>
+
+          <!-- Turn-by-Turn Steps Accordion -->
+          <div>
+            <div id="toggleStepsHeader" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 6px 0;">
+              <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">
+                <i class="fa-solid fa-diamond-turn-right"></i> TURN-BY-TURN GUIDANCE (<span id="stepsCount">0</span>)
+              </span>
+              <i id="stepsChevron" class="fa-solid fa-chevron-down" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+            </div>
+            <div id="turnByTurnList" style="display: none; max-height: 200px; overflow-y: auto; margin-top: 6px; font-size: 0.82rem; border-top: 1px solid var(--border-light); padding-top: 8px;"></div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- RIGHT MAP VIEWPORT -->
+    <main class="map-viewport">
+
+      <!-- CREATIVE LIVE HUD STRIP (Top of Map) -->
+      <div class="floating-hud-strip">
+        <div class="hud-pill"><i class="fa-solid fa-satellite" style="color:#06B6D4;"></i> <span>GPS 99.8%</span></div>
+        <div class="hud-pill"><i class="fa-solid fa-shield-virus" style="color:#10B981;"></i> <span>DETOUR SHIELD: ACTIVE</span></div>
+        <div class="hud-pill"><i class="fa-solid fa-road" style="color:#6366F1;"></i> <span>GRIP: 96% OPTIMAL</span></div>
+        <div class="hud-pill"><i class="fa-solid fa-cloud-sun" style="color:#F59E0B;"></i> <span>22°C CLEAR</span></div>
+      </div>
+
+      <!-- FLOATING NEARBY SERVICES DOCK (Dedicated High-Visibility Creative Buttons) -->
+      <div class="floating-nearby-dock">
+        <span style="font-size: 0.74rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-right: 4px;">
+          Nearby:
+        </span>
+        <button class="btn-nearby-pill hospital" data-category="hospital">
+          <i class="fa-solid fa-hospital"></i> Hospitals
+        </button>
+        <button class="btn-nearby-pill fuel" data-category="fuel">
+          <i class="fa-solid fa-gas-pump"></i> Petrol & EV
+        </button>
+        <button class="btn-nearby-pill fire" data-category="fire">
+          <i class="fa-solid fa-fire-extinguisher"></i> Fire Stations
+        </button>
+        <button class="btn-nearby-pill parking" data-category="parking">
+          <i class="fa-solid fa-square-parking"></i> Parking
+        </button>
+        <button class="btn-nearby-pill restaurant" data-category="restaurant">
+          <i class="fa-solid fa-utensils"></i> Restaurants
+        </button>
+        <button id="btnClearNearby" class="btn-nearby-pill clear" title="Clear Nearby POIs">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+
+      <!-- DYNAMIC REROUTE ALERT BANNER -->
+      <div id="rerouteBanner" class="reroute-alert-banner">
+        <i class="fa-solid fa-route fa-spin"></i>
+        <span id="rerouteBannerText">Road hazard detected ahead! Dynamic detour calculated (-2.1 min).</span>
+      </div>
+
+      <!-- FLOATING MAP CONTROLS (Right side) -->
+      <div class="floating-map-tools">
+        <!-- Toggle Road Closures Display -->
+        <button id="btnToggleClosures" class="btn-floating-tool active" title="Toggle Road Closures Display">
+          <i class="fa-solid fa-road-barrier" style="color: #EF4444;"></i>
+        </button>
+
+        <!-- Report / Add Road Closure on Map -->
+        <button id="btnAddClosureTool" class="btn-floating-tool" title="Report / Draw Road Closure on Map">
+          <i class="fa-solid fa-triangle-exclamation" style="color: #F59E0B;"></i>
+        </button>
+
+        <!-- Toggle Map Tiles (Carto Voyager / OpenStreetMap / Dark Matter) -->
+        <button id="btnMapStyleToggle" class="btn-floating-tool" title="Switch Map Tiles (Bright / Standard / Dark)">
+          <i class="fa-solid fa-layer-group"></i>
+        </button>
+
+        <!-- Recenter to Route -->
+        <button id="btnRecenterMap" class="btn-floating-tool" title="Center on Active Route">
+          <i class="fa-solid fa-location-arrow"></i>
+        </button>
+      </div>
+
+      <!-- NEARBY POI RESULTS SLIDE-OVER DRAWER -->
+      <div id="poiDrawer" class="poi-drawer">
+        <div class="poi-drawer-header">
+          <h3 id="poiDrawerTitle"><i class="fa-solid fa-hospital" style="color: #EF4444;"></i> Nearby Hospitals</h3>
+          <button id="btnClosePoiDrawer" class="btn-nav-tool" style="width: 28px; height: 28px;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div id="poiList" class="poi-list"></div>
+      </div>
+
+      <!-- Leaflet Map Canvas -->
+      <div id="map"></div>
+
+    </main>
+  </div>
+
+  <!-- ==========================================================================
+       SAVED ROUTES & DATABASE DRAWER
+       ========================================================================== -->
+  <div id="savedRoutesDrawer" class="saved-routes-drawer">
+    <div class="poi-drawer-header">
+      <h3><i class="fa-solid fa-database" style="color: var(--primary-accent);"></i> Saved Trips Database</h3>
+      <button id="btnCloseSavedRoutes" class="btn-nav-tool" style="width: 28px; height: 28px;">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div style="padding: 10px 14px; background: var(--bg-primary); border-bottom: 1px solid var(--border-light); font-size: 0.78rem; color: var(--text-muted); display:flex; align-items:center; justify-content:space-between;">
+      <span>Stored persistently in SQLite</span>
+      <span id="savedCount" style="background:var(--primary-accent); color:#fff; padding:2px 7px; border-radius:10px; font-weight:800;">0</span>
+    </div>
+    <div id="savedRoutesList" class="saved-routes-list"></div>
+  </div>
+
+  <!-- ==========================================================================
+       ROUTE INTELLIGENCE & ANALYTICS MODAL
+       ========================================================================== -->
+  <div id="analyticsModal" class="analytics-modal">
+    <div class="analytics-content">
+      <div class="analytics-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="brand-icon-box" style="background: linear-gradient(135deg, #10B981 0%, #06B6D4 100%);">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <div>
+            <h2 style="font-size: 1.15rem; font-weight: 800;">Route Intelligence & Telemetry Analytics</h2>
+            <p style="font-size: 0.78rem; color: var(--text-muted);">Real-time telemetry, elevation profiles, emissions, and algorithmic benchmarks</p>
+          </div>
+        </div>
+        <button id="btnCloseAnalytics" class="btn-nav-tool" style="border-radius: 50%;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="analytics-tabs">
+        <button class="tab-btn active" data-tab="tab-overview">
+          <i class="fa-solid fa-gauge-high"></i> Overview & Benchmark
+        </button>
+        <button class="tab-btn" data-tab="tab-elevation">
+          <i class="fa-solid fa-mountain"></i> Elevation Profile
+        </button>
+        <button class="tab-btn" data-tab="tab-eco">
+          <i class="fa-solid fa-leaf"></i> Eco & Traffic Flow
+        </button>
+        <button class="tab-btn" data-tab="tab-database">
+          <i class="fa-solid fa-chart-pie"></i> Fleet Telemetry DB
+        </button>
+      </div>
+
+      <!-- Analytics Modal Body -->
+      <div class="analytics-body">
+        
+        <!-- Tab 1: Overview & AI Benchmark -->
+        <div id="tab-overview" class="analytics-tab-panel active">
+          <div class="stats-cards-row">
+            <div class="stat-box">
+              <span class="val" id="benchAStarTime">4.2 ms</span>
+              <span class="lbl">A* Search Speed</span>
+            </div>
+            <div class="stat-box">
+              <span class="val" id="benchNodesVisited">42</span>
+              <span class="lbl">Nodes Explored</span>
+            </div>
+            <div class="stat-box">
+              <span class="val" id="benchSpeedup" style="color: var(--emerald-accent);">+68%</span>
+              <span class="lbl">vs Dijkstra Speed</span>
+            </div>
+            <div class="stat-box">
+              <span class="val" id="benchSurfaceQual">94%</span>
+              <span class="lbl">Road Quality</span>
+            </div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h4><i class="fa-solid fa-microchip" style="color: var(--primary-accent);"></i> A* vs Dijkstra Algorithmic Benchmark</h4>
+              <div class="chart-wrapper">
+                <canvas id="chartAlgorithmBenchmark"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h4><i class="fa-solid fa-traffic-light" style="color: #F59E0B;"></i> Congestion Flow Distribution</h4>
+              <div class="chart-wrapper">
+                <canvas id="chartTrafficFlow"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Elevation Profile -->
+        <div id="tab-elevation" class="analytics-tab-panel">
+          <div class="chart-card" style="height: 340px;">
+            <h4><i class="fa-solid fa-mountain" style="color: #06B6D4;"></i> Terrain Elevation Profile (Meters above Sea Level)</h4>
+            <div class="chart-wrapper" style="height: 270px;">
+              <canvas id="chartElevation"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Eco & Emissions -->
+        <div id="tab-eco" class="analytics-tab-panel">
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h4><i class="fa-solid fa-smog" style="color: var(--emerald-accent);"></i> CO₂ Emissions by Priority Mode (kg)</h4>
+              <div class="chart-wrapper">
+                <canvas id="chartEmissions"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h4><i class="fa-solid fa-gas-pump" style="color: #06B6D4;"></i> Estimated Fuel / Energy Usage</h4>
+              <div style="display: flex; flex-direction: column; justify-content: center; height: 100%; gap: 14px; padding: 10px;">
+                <div style="background: var(--bg-primary); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                  <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">ESTIMATED FUEL CONSUMPTION</div>
+                  <div id="ecoFuelVal" style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">0.52 Liters</div>
+                  <div id="ecoCostVal" style="font-size: 0.8rem; color: var(--emerald-accent); font-weight: 700;">~$0.75 Estimated Fuel Cost</div>
+                </div>
+                <div style="background: var(--bg-primary); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                  <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">TREE OFFSET EQUIVALENT</div>
+                  <div id="ecoTreeVal" style="font-size: 1.5rem; font-weight: 800; color: #10B981;">14 Trees / Year</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Calculated using EPA carbon absorption benchmarks</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Fleet Telemetry DB -->
+        <div id="tab-database" class="analytics-tab-panel">
+          <div class="chart-card">
+            <h4><i class="fa-solid fa-server" style="color: #8B5CF6;"></i> Overall Database Telemetry Aggregate</h4>
+            <div class="stats-cards-row" style="margin-top: 10px;">
+              <div class="stat-box">
+                <span class="val" id="dbTotalTrips">0</span>
+                <span class="lbl">Total Trips Calculated</span>
+              </div>
+              <div class="stat-box">
+                <span class="val" id="dbTotalKm">0 km</span>
+                <span class="lbl">Total Km Optimized</span>
+              </div>
+              <div class="stat-box">
+                <span class="val" id="dbAvgCalcTime">0 ms</span>
+                <span class="lbl">Avg AI Calc Time</span>
+              </div>
+              <div class="stat-box">
+                <span class="val" id="dbActiveClosures">0</span>
+                <span class="lbl">Active Road Closures</span>
+              </div>
+            </div>
+            <div class="chart-wrapper" style="height: 180px;">
+              <canvas id="chartPriorityDistribution"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Client-Side Modular JS Scripts -->
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/routing.js"></script>
+  <script src="/static/js/nearby.js"></script>
+  <script src="/static/js/closures.js"></script>
+  <script src="/static/js/analytics.js"></script>
+  <script src="/static/js/db_manager.js"></script>
+</body>
+</html>

@@ -489,3 +489,61 @@ document.addEventListener('DOMContentLoaded', () => {
     triggerRouteCalculation();
   }, 400);
 });
+// ---- Mobile bottom-sheet behaviour ----
+document.addEventListener('DOMContentLoaded', () => {
+  const sidebar = document.getElementById('plannerSidebar');
+  const handle = document.getElementById('sheetHandle');
+  const label = document.getElementById('sheetHandleLabel');
+  if (!sidebar || !handle) return;
+
+  const isMobile = () => window.matchMedia('(max-width: 900px)').matches;
+  const collapse = () => { if (isMobile()) sidebar.classList.add('collapsed'); };
+  let collapseAfterRoute = false;
+
+  // Tap the handle to open or close the panel
+  handle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+
+  // City selector copy inside the sheet (the top bar hides it on phones)
+  const mainCity = document.getElementById('quickCitySelect');
+  if (mainCity) {
+    const mobileCity = mainCity.cloneNode(true);
+    mobileCity.id = 'quickCitySelectMobile';
+    mobileCity.classList.add('city-select-mobile');
+    document.querySelector('.sidebar-content').prepend(mobileCity);
+    mobileCity.addEventListener('change', () => {
+      collapseAfterRoute = true;
+      mainCity.value = mobileCity.value;
+      mainCity.dispatchEvent(new Event('change'));
+    });
+  }
+
+  // Collapse the sheet after planning so the map is visible
+  document.getElementById('btnCalculateRoute').addEventListener('click', () => {
+    collapseAfterRoute = true;
+  });
+
+  // These actions need the map visible
+  ['btnPickOnMap', 'btnAddWaypoint', 'btnStartSim', 'btnTriggerObstacle'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', collapse);
+  });
+  document.querySelectorAll('.btn-nearby-pill[data-category]').forEach(btn => {
+    btn.addEventListener('click', collapse);
+  });
+
+  // Show time and distance in the handle once a route is ready
+  if (typeof updateRouteSummaryCard === 'function') {
+    const original = updateRouteSummaryCard;
+    updateRouteSummaryCard = function (data) {
+      original(data);
+      label.textContent = `${data.route_duration_min} min • ${data.total_distance_km} km — tap for details`;
+      if (collapseAfterRoute) collapse();
+      collapseAfterRoute = false;
+    };
+  }
+
+  // Keep the map sized correctly when the phone rotates
+  const refreshMap = () => AppState.map && AppState.map.invalidateSize();
+  window.addEventListener('resize', refreshMap);
+  window.addEventListener('orientationchange', () => setTimeout(refreshMap, 300));
+});
